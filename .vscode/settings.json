@@ -2,7 +2,12 @@
   "spellright.language": ["en"],
   "spellright.documentTypes": ["markdown", "latex", "plaintext", "cpp"],
   "files.associations": {
+    "*.cpp": "cpp",
+    "*.py": "python",
     "iostream": "cpp",
-    "iosfwd": "cpp"
+    "iosfwd": "cpp",
+    "__verbose_abort": "c",
+    "cstdio": "c",
+    "format": "c"
   }
 }
