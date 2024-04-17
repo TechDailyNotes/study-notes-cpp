@@ -10,72 +10,69 @@ private:
 
 public:
     Vector()
-        :_items(new T[1]), _capacity(1), _size(0) {
+        : _items(new T[1]), _capacity(1), _size(0) {
             std::cout << "Vector()" << std::endl;
         }
 
     ~Vector() {
-        delete[] _items;
         std::cout << "~Vector()" << std::endl;
+        delete[] _items;
     }
 
-    // Copy constructor
     Vector(const Vector& other)
         : _items(new T[other._capacity]), _capacity(other._capacity), _size(other._size) {
-            // std::copy(other._items, other._items + other._size, _items);
-            memcpy(_items, other._items, sizeof(T) * _size);
             std::cout << "Vector(const Vector& other)" << std::endl;
-        }
-
-    // Copy assignment operator
-    Vector& operator=(const Vector &other) {
-        std::cout << "Vector& operator=(const Vector& other)" << std::endl;
-        if (this != &other) {
-            delete[] _items;
-            _capacity = other._capacity;
-            _size = other._size;
-            _items = new T[other._capacity];
-            // std::copy(other._items, other._items + other._size, _items);
             memcpy(_items, other._items, sizeof(T) * _size);
         }
-        return *this;
-    }
 
-    // Move constructor
     Vector(Vector&& other)
-        :_items(other._items), _capacity(other._capacity), _size(other._size) {
+        : _items(other._items), _capacity(other._capacity), _size(other._size) {
             std::cout << "Vector(Vector&& other)" << std::endl;
             other._items = nullptr;
             other._capacity = 0;
             other._size = 0;
         }
 
-    // Move assignment operator
+    Vector& operator=(const Vector& other) {
+        std::cout << "Vector& operator=(const Vector& other)" << std::endl;
+        if (this != &other) {
+            _capacity = other._capacity;
+            _size = other._size;
+            delete[] _items;
+            _items = new T[_capacity];
+            memcpy(_items, other._items, sizeof(T) * _size);
+        }
+        return *this;
+    }
+
     Vector& operator=(Vector&& other) {
-        std::cout << "Vector& operator=(Vector&& other)" << std::endl;
         if (this != &other) {
             delete[] _items;
             _items = other._items;
-            other._items = nullptr;
             _capacity = other._capacity;
-            other._capacity = 0;
             _size = other._size;
+            other._items = nullptr;
+            other._capacity = 0;
             other._size = 0;
         }
         return *this;
     }
 
-    void push(const T& item) {
-        if (_size >= _capacity) {
-            std::cout << "Extending capacity from " << _capacity << " to " << 2 * _capacity << std::endl;
-            T* _newItems = new T[2*_capacity];
-            // std::copy(_items, _items + _size, _newItems);
-            memcpy(_newItems, _items, sizeof(T) * _size);
+    void reserve(size_t number) {
+        if (number > _capacity) {
+            T* newItems = new T[number];
+            memcpy(newItems, _items, sizeof(T) * _size);
             delete[] _items;
-            _items = _newItems;
-            _capacity *= 2;
+            _items = newItems;
+            _capacity = number;
         }
+    }
 
+    void push(T item) {
+        if (_size == _capacity) {
+            std::cout << "Expand capacity from " << _capacity << " to " << 2 * _capacity << std::endl;
+            reserve(2 * _capacity);
+        }
         _items[_size++] = item;
     }
 
@@ -85,30 +82,27 @@ public:
         }
     }
 
-    void reserve(const size_t number) {
-        if (number > _capacity) {
-            T* _newItems = new T[number];
-            // std::copy(_items, _items + _size, _newItems);
-            memcpy(_newItems, _items, sizeof(T) * _size);
-            delete[] _items;
-            _items = _newItems;
-            _capacity = number;
-        }
-    }
-
     size_t size() {
         return _size;
     }
 
+    size_t capacity() {
+        return _capacity;
+    }
+
     T& front() {
-        return _items[0];
+        if (_size > 0) {
+            return _items[0];
+        }
     }
 
     T& back() {
-        return _items[_size-1];
+        if (_size > 0) {
+            return _items[_size-1];
+        }
     }
 
-    T& operator[](const size_t index) {
+    T& operator[](size_t index) {
         if (index < _size) {
             return _items[index];
         }
@@ -119,7 +113,6 @@ std::ostream& operator<<(std::ostream& os, Vector<int>& v) {
     for (int i = 0; i < v.size(); i++) {
         os << v[i] << " ";
     }
-
     return os;
 }
 
@@ -132,13 +125,12 @@ int main() {
     v1.push(4);
     v1.push(5);
     std::cout << v1 << std::endl;
-    std::cout << std::endl;
-
     v1.pop();
     v1.pop();
     std::cout << v1 << std::endl;
-
     v1.reserve(8);
+    std::cout << v1.capacity() << std::endl;
+    std::cout << v1.size() << std::endl;
     v1.push(4);
     v1.push(5);
     v1.push(6);
@@ -146,15 +138,15 @@ int main() {
     v1.push(8);
     v1.push(9);
     std::cout << v1 << std::endl;
-
-    std::cout << v1.front() << std::endl;
-    std::cout << v1.back() << std::endl;
-
     v1[0] = 100;
     std::cout << v1 << std::endl;
+    std::cout << std::endl;
 
     std::cout << "Test 2" << std::endl;
     Vector<int> v2 = v1;
+    std::cout << v1 << std::endl;
+    std::cout << v2 << std::endl;
+    v2[0] = 200;
     std::cout << v1 << std::endl;
     std::cout << v2 << std::endl;
     std::cout << std::endl;
@@ -164,23 +156,29 @@ int main() {
     v3 = v1;
     std::cout << v1 << std::endl;
     std::cout << v3 << std::endl;
+    v3[0] = 300;
+    std::cout << v1 << std::endl;
+    std::cout << v3 << std::endl;
     std::cout << std::endl;
 
     std::cout << "Test 4" << std::endl;
-    Vector<int> v4(std::move(v1));
-    std::cout << v1 << std::endl;
+    Vector<int> v4 = std::move(v2);
+    std::cout << v2 << std::endl;
+    std::cout << v4 << std::endl;
+    v4[0] = 400;
+    std::cout << v2 << std::endl;
     std::cout << v4 << std::endl;
     std::cout << std::endl;
 
     std::cout << "Test 5" << std::endl;
     Vector<int> v5;
-    v5 = std::move(v4);
-    std::cout << v4 << std::endl;
+    v5 = std::move(v3);
+    std::cout << v3 << std::endl;
+    std::cout << v5 << std::endl;
+    v5[0] = 500;
+    std::cout << v3 << std::endl;
     std::cout << v5 << std::endl;
     std::cout << std::endl;
-
-    std::cout << v2 << std::endl;
-    std::cout << v3 << std::endl;
 
     return 0;
 }
